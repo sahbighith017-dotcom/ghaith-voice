@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ghaith Voice Studio</title>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f5f7fa;
+  text-align:center;
+  padding:20px;
+  direction:rtl;
+}
+h1{color:#222}
+textarea{
+  width:95%;
+  height:120px;
+  font-size:18px;
+  padding:10px;
+  border-radius:8px;
+}
+select,button{
+  width:95%;
+  padding:12px;
+  font-size:18px;
+  margin-top:10px;
+  border-radius:8px;
+}
+button{
+  background:#0066ff;
+  color:white;
+  border:none;
+}
+#download{
+  display:none;
+  margin-top:20px;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🎙️ Ghaith Voice Studio</h1>
+
+<textarea id="text">مرحبا، هذا تطبيق غيث لتحويل النص إلى صوت.</textarea>
+
+<select id="lang">
+<option value="ar-SA">العربية</option>
+<option value="en-US">English</option>
+<option value="fr-FR">Français</option>
+<option value="de-DE">Deutsch</option>
+<option value="es-ES">Español</option>
+</select>
+
+<select id="voices"></select>
+
+<button onclick="speak()">🔊 تشغيل الصوت</button>
+<button onclick="record()">🎧 تشغيل + حفظ WAV</button>
+
+<a id="download" download="ghaith_voice.wav">⬇️ تحميل الملف الصوتي</a>
+
+<script>
+let voices=[];
+
+speechSynthesis.onvoiceschanged=()=>{
+  voices=speechSynthesis.getVoices();
+  let v=document.getElementById("voices");
+  v.innerHTML="";
+  voices.forEach((voice,i)=>{
+    let o=document.createElement("option");
+    o.value=i;
+    o.text=voice.name+" ("+voice.lang+")";
+    v.appendChild(o);
+  });
+};
+
+function speak(){
+  let u=new SpeechSynthesisUtterance(
+    document.getElementById("text").value
+  );
+  u.lang=document.getElementById("lang").value;
+  u.voice=voices[
+    document.getElementById("voices").value
+  ];
+  speechSynthesis.speak(u);
+}
+
+async function record(){
+  let stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  let recorder=new MediaRecorder(stream);
+  let data=[];
+  recorder.ondataavailable=e=>data.push(e.data);
+  recorder.onstop=()=>{
+    let blob=new Blob(data,{type:"audio/wav"});
+    let url=URL.createObjectURL(blob);
+    let a=document.getElementById("download");
+    a.href=url;
+    a.style.display="block";
+    stream.getTracks().forEach(t=>t.stop());
+  };
+  recorder.start();
+  speak();
+  setTimeout(()=>recorder.stop(),5000);
+}
+</script>
+
+</body>
+</html>
